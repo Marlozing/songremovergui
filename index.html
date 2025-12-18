@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>SongRemover</title>
+    <style>
+        /* 기본 설정 */
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #1e1e1e;
+            color: #ffffff;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+
+        /* --- 메인 뷰 스타일 --- */
+        #main-view {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            box-sizing: border-box;
+            transition: opacity 0.3s;
+        }
+
+        h1 {
+            color: #4facfe;
+            margin-bottom: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .drop-zone {
+            border: 2px dashed #444;
+            border-radius: 10px;
+            padding: 30px;
+            text-align: center;
+            margin-bottom: 20px;
+            transition: 0.3s;
+            background-color: #252526;
+            cursor: pointer;
+        }
+
+        .drop-zone:hover {
+            border-color: #4facfe;
+            background-color: #2d2d30;
+        }
+
+        .drop-zone.active {
+            border-color: #00f260;
+            background-color: #1e3a29;
+        }
+
+        .label {
+            font-size: 0.9em;
+            color: #aaa;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .filename {
+            font-weight: bold;
+            color: #fff;
+            word-break: break-all;
+        }
+
+        button {
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.1s;
+            padding: 15px;
+        }
+
+        button:active { transform: scale(0.98); }
+        button:disabled { background: #444; cursor: not-allowed; }
+
+        #btn-process {
+            width: 100%;
+            background: linear-gradient(to right, #4facfe 0%, #00f260 100%);
+        }
+
+        /* --- 설정 패널 CSS --- */
+        .settings-panel {
+            position: fixed;
+            bottom: -290px;
+            left: 0;
+            width: 100%;
+            height: 260px;
+            background-color: #252526;
+            box-shadow: 0 -5px 15px rgba(0,0,0,0.5);
+            transition: bottom 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+            padding: 20px 40px;
+            box-sizing: border-box;
+            border-top: 1px solid #444;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            z-index: 100;
+        }
+
+        .settings-panel.open {
+            bottom: 0;
+        }
+
+        .settings-toggle-btn {
+            position: absolute;
+            top: -40px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60%;
+            max-width: 400px;
+            background-color: #333;
+            color: #ddd;
+            padding: 10px 0;
+            border-radius: 12px 12px 0 0;
+            cursor: pointer;
+            font-size: 1em;
+            border: 1px solid #444;
+            border-bottom: none;
+            transition: background-color 0.2s;
+            z-index: 101;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .settings-toggle-btn:hover {
+            background-color: #444;
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            color: #ddd;
+        }
+
+        .control-label {
+            width: 140px;
+            font-size: 1em;
+        }
+
+        .control-desc {
+            font-size: 0.8em;
+            color: #888;
+            margin-left: 5px;
+        }
+
+        input[type=range] {
+            flex-grow: 1;
+            margin: 0 20px;
+            cursor: pointer;
+            height: 6px;
+            background: #444;
+            border-radius: 3px;
+            -webkit-appearance: none;
+        }
+
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            background: #4facfe;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        input[type=range]::-webkit-slider-thumb:hover {
+            background: #00f260;
+        }
+
+        input[type=number] {
+            width: 60px;
+            background-color: #1e1e1e;
+            border: 1px solid #555;
+            color: white;
+            padding: 8px;
+            border-radius: 6px;
+            text-align: center;
+            font-size: 1em;
+            outline: none;
+        }
+
+        input[type=number]:focus {
+            border-color: #4facfe;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 26px;
+        }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #444; transition: .4s; border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: #4facfe; }
+        input:checked + .slider:before { transform: translateX(24px); }
+
+
+        /* --- 로그 뷰 스타일 (처음엔 숨김) --- */
+        #log-view {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background-color: #1e1e1e;
+            z-index: 200;
+            flex-direction: column;
+        }
+
+        #log-header {
+            background-color: #252526;
+            padding: 15px 20px;
+            border-bottom: 1px solid #333;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        #log-header h2 {
+            margin: 0;
+            font-size: 1.2em;
+            color: #4facfe;
+        }
+
+        #log-container {
+            flex-grow: 1;
+            padding: 20px;
+            overflow-y: auto;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 0.95em;
+            line-height: 1.5;
+            word-break: break-all;
+            color: #ddd;
+        }
+
+        #log-container::-webkit-scrollbar { width: 10px; }
+        #log-container::-webkit-scrollbar-track { background: #1e1e1e; }
+        #log-container::-webkit-scrollbar-thumb { background: #444; border-radius: 5px; }
+
+        .log-entry { margin-bottom: 4px; border-bottom: 1px solid #2a2a2a; padding-bottom: 2px; }
+        .log-info { color: #cccccc; }
+        .log-python { color: #4facfe; }
+        .log-error { color: #ff6b6b; font-weight: bold; }
+        .log-success { color: #00f260; font-weight: bold; }
+
+        /* [추가] 다운로드 버튼 영역 */
+        #download-area {
+            padding: 20px;
+            border-top: 1px solid #333;
+            background-color: #252526;
+            display: none; /* 초기엔 숨김 */
+            text-align: center;
+        }
+
+        #btn-download {
+            width: 100%;
+            max-width: 300px;
+            background: linear-gradient(to right, #00c6ff, #0072ff);
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+<div id="main-view">
+    <h1>Song Remover</h1>
+
+    <div class="container">
+        <span class="label">배경음악 (Background Song)</span>
+        <div id="drop-ref" class="drop-zone">
+            <div id="name-ref">파일을 드래그하거나 클릭하세요</div>
+        </div>
+
+        <span class="label">녹음본 (Mic/Mixture)</span>
+        <div id="drop-mic" class="drop-zone">
+            <div id="name-mic">파일을 드래그하거나 클릭하세요</div>
+        </div>
+
+        <button id="btn-process">변환 시작</button>
+    </div>
+
+    <div class="settings-panel" id="settingsPanel">
+        <button class="settings-toggle-btn" id="btnToggleSettings">⚙ 고급 설정 (Click)</button>
+
+        <div class="control-group">
+            <div><span class="control-label">Alpha</span><span class="control-desc">(강도 0.5~1.0)</span></div>
+            <input type="range" id="rangeAlpha" min="0.5" max="1.0" step="0.1" value="0.5">
+            <input type="number" id="numAlpha" min="0.5" max="1.0" step="0.1" value="0.5">
+        </div>
+
+        <div class="control-group">
+            <div><span class="control-label">Beta</span><span class="control-desc">(잔여 0.0~0.5)</span></div>
+            <input type="range" id="rangeBeta" min="0.0" max="0.5" step="0.1" value="0.2">
+            <input type="number" id="numBeta" min="0.0" max="0.5" step="0.1" value="0.2">
+        </div>
+
+        <div class="control-group">
+            <div><span class="control-label">AI 노이즈 제거</span><span class="control-desc">(DeepFilterNet)</span></div>
+            <label class="switch">
+                <input type="checkbox" id="checkUseDeepFilter" checked>
+                <span class="slider"></span>
+            </label>
+        </div>
+    </div>
+</div>
+
+<div id="log-view">
+    <div id="log-header">
+        <h2>Processing Log</h2>
+        <span style="font-size: 0.8em; color: #888;">작업 진행 중...</span>
+    </div>
+    <div id="log-container"></div>
+
+    <div id="download-area">
+        <button id="btn-download">💾 파일 내려받기</button>
+    </div>
+</div>
+
+<script src="renderer.js"></script>
+</body>
+</html>

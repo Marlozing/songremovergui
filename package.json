@@ -1,0 +1,54 @@
+{
+  "name": "songremover",
+  "productName": "Song Remover",
+  "version": "1.0.0",
+  "description": "Python Song Remover",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder"
+  },
+  "keywords": [],
+  "author": "gunnerana",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "electron": "^39.2.7",
+    "electron-builder": "^26.0.12"
+  },
+  "build": {
+    "appId": "com.gunnerana.songremover",
+    "win": {
+      "target": "nsis",
+      "icon": "assets/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Song Remover",
+      "installerIcon": "assets/icon.ico",
+      "uninstallerIcon": "assets/icon.ico",
+      "installerHeaderIcon": "assets/icon.ico"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "renderer.js",
+      "index.html",
+      "node_modules/**/*",
+      "assets/icon.ico"
+    ],
+    "extraResources": [
+      {
+        "from": "dist/align_audio.exe",
+        "to": "align_audio.exe"
+      },
+      {
+        "from": "resources/deep-filter.exe",
+        "to": "deep-filter.exe"
+      }
+    ]
+  }
+}
