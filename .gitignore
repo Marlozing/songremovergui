@@ -1,5 +1,5 @@
 /dist/
 /build/
 /.idea/
-/node_modules/
+node_modules/
 /venv_build/
