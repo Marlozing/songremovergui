@@ -1,11 +1,10 @@
 <!DOCTYPE html>
 <html>
-
 <head>
     <meta charset="UTF-8">
     <title>SongRemover</title>
     <style>
-        /* 기본 설정 */
+        /* 기본 설정 (기존 디자인 유지) */
         body {
             font-family: 'Segoe UI', sans-serif;
             background-color: #1e1e1e;
@@ -17,7 +16,6 @@
             box-sizing: border-box;
         }
 
-        /* --- 메인 뷰 스타일 --- */
         #main-view {
             width: 100%;
             height: 100%;
@@ -26,7 +24,6 @@
             align-items: center;
             padding: 20px;
             box-sizing: border-box;
-            transition: opacity 0.3s;
         }
 
         h1 {
@@ -48,33 +45,16 @@
             padding: 30px;
             text-align: center;
             margin-bottom: 20px;
-            transition: 0.3s;
             background-color: #252526;
             cursor: pointer;
+            transition: 0.3s;
         }
 
-        .drop-zone:hover {
-            border-color: #4facfe;
-            background-color: #2d2d30;
-        }
+        .drop-zone:hover { border-color: #4facfe; background-color: #2d2d30; }
+        .drop-zone.active { border-color: #00f260; background-color: #1e3a29; }
 
-        .drop-zone.active {
-            border-color: #00f260;
-            background-color: #1e3a29;
-        }
-
-        .label {
-            font-size: 0.9em;
-            color: #aaa;
-            margin-bottom: 10px;
-            display: block;
-        }
-
-        .filename {
-            font-weight: bold;
-            color: #fff;
-            word-break: break-all;
-        }
+        .label { font-size: 0.9em; color: #aaa; margin-bottom: 10px; display: block; }
+        .filename { font-weight: bold; color: #fff; word-break: break-all; }
 
         button {
             border: none;
@@ -83,11 +63,9 @@
             font-size: 1.1em;
             font-weight: bold;
             cursor: pointer;
-            transition: transform 0.1s;
             padding: 15px;
         }
 
-        button:active { transform: scale(0.98); }
         button:disabled { background: #444; cursor: not-allowed; }
 
         #btn-process {
@@ -95,189 +73,83 @@
             background: linear-gradient(to right, #4facfe 0%, #00f260 100%);
         }
 
-        /* --- 설정 패널 CSS --- */
+        /* --- [변경] 오른쪽 하단 플로팅 버튼 (FAB) --- */
+        .settings-fab {
+            position: fixed;
+            right: 30px;
+            bottom: 30px;
+            width: 56px;
+            height: 56px;
+            background: #333; /* 심플한 다크 그레이 */
+            border: 1px solid #555;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            z-index: 150;
+            transition: transform 0.2s;
+        }
+
+        .settings-fab:hover {
+            background-color: #444;
+            transform: scale(1.1);
+        }
+
+        /* 아이콘 색상: 하얀색 */
+        .settings-fab svg {
+            width: 28px;
+            height: 28px;
+            fill: #ffffff;
+        }
+
+        /* --- 설정 패널 (버튼 위에 뜸) --- */
         .settings-panel {
             position: fixed;
-            bottom: -290px;
-            left: 0;
-            width: 100%;
-            height: 260px;
+            right: 30px;
+            bottom: 100px;
+            width: 300px;
             background-color: #252526;
-            box-shadow: 0 -5px 15px rgba(0,0,0,0.5);
-            transition: bottom 0.4s cubic-bezier(0.19, 1, 0.22, 1);
-            padding: 20px 40px;
-            box-sizing: border-box;
-            border-top: 1px solid #444;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            z-index: 100;
-        }
-
-        .settings-panel.open {
-            bottom: 0;
-        }
-
-        .settings-toggle-btn {
-            position: absolute;
-            top: -40px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 60%;
-            max-width: 400px;
-            background-color: #333;
-            color: #ddd;
-            padding: 10px 0;
-            border-radius: 12px 12px 0 0;
-            cursor: pointer;
-            font-size: 1em;
             border: 1px solid #444;
-            border-bottom: none;
-            transition: background-color 0.2s;
-            z-index: 101;
-            font-weight: bold;
-            text-align: center;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            padding: 20px;
+            display: none; /* 숨김 */
+            flex-direction: column;
+            z-index: 140;
         }
 
-        .settings-toggle-btn:hover {
-            background-color: #444;
-        }
+        .settings-panel.open { display: flex; }
 
         .control-group {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             color: #ddd;
         }
 
-        .control-label {
-            width: 140px;
-            font-size: 1em;
-        }
+        input[type=range] { flex-grow: 1; margin: 0 10px; }
+        input[type=number] { width: 50px; text-align: center; }
 
-        .control-desc {
-            font-size: 0.8em;
-            color: #888;
-            margin-left: 5px;
-        }
-
-        input[type=range] {
-            flex-grow: 1;
-            margin: 0 20px;
-            cursor: pointer;
-            height: 6px;
-            background: #444;
-            border-radius: 3px;
-            -webkit-appearance: none;
-        }
-
-        input[type=range]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            width: 18px;
-            height: 18px;
-            background: #4facfe;
-            border-radius: 50%;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-
-        input[type=range]::-webkit-slider-thumb:hover {
-            background: #00f260;
-        }
-
-        input[type=number] {
-            width: 60px;
-            background-color: #1e1e1e;
-            border: 1px solid #555;
-            color: white;
-            padding: 8px;
-            border-radius: 6px;
-            text-align: center;
-            font-size: 1em;
-            outline: none;
-        }
-
-        input[type=number]:focus {
-            border-color: #4facfe;
-        }
-
-        .switch {
-            position: relative;
-            display: inline-block;
-            width: 50px;
-            height: 26px;
-        }
+        /* 스위치 스타일 */
+        .switch { position: relative; display: inline-block; width: 40px; height: 20px; }
         .switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #444; transition: .4s; border-radius: 34px; }
-        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #444; transition: .4s; border-radius: 20px; }
+        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 2px; bottom: 2px; background-color: white; transition: .4s; border-radius: 50%; }
         input:checked + .slider { background-color: #4facfe; }
-        input:checked + .slider:before { transform: translateX(24px); }
+        input:checked + .slider:before { transform: translateX(20px); }
 
-
-        /* --- 로그 뷰 스타일 (처음엔 숨김) --- */
+        /* 로그 뷰 & 다운로드 영역 */
         #log-view {
             display: none;
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background-color: #1e1e1e;
-            z-index: 200;
-            flex-direction: column;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: #1e1e1e; z-index: 200; flex-direction: column;
         }
-
-        #log-header {
-            background-color: #252526;
-            padding: 15px 20px;
-            border-bottom: 1px solid #333;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        #log-header h2 {
-            margin: 0;
-            font-size: 1.2em;
-            color: #4facfe;
-        }
-
-        #log-container {
-            flex-grow: 1;
-            padding: 20px;
-            overflow-y: auto;
-            font-family: 'Consolas', 'Courier New', monospace;
-            font-size: 0.95em;
-            line-height: 1.5;
-            word-break: break-all;
-            color: #ddd;
-        }
-
-        #log-container::-webkit-scrollbar { width: 10px; }
-        #log-container::-webkit-scrollbar-track { background: #1e1e1e; }
-        #log-container::-webkit-scrollbar-thumb { background: #444; border-radius: 5px; }
-
-        .log-entry { margin-bottom: 4px; border-bottom: 1px solid #2a2a2a; padding-bottom: 2px; }
-        .log-info { color: #cccccc; }
-        .log-python { color: #4facfe; }
-        .log-error { color: #ff6b6b; font-weight: bold; }
-        .log-success { color: #00f260; font-weight: bold; }
-
-        /* [추가] 다운로드 버튼 영역 */
-        #download-area {
-            padding: 20px;
-            border-top: 1px solid #333;
-            background-color: #252526;
-            display: none; /* 초기엔 숨김 */
-            text-align: center;
-        }
-
-        #btn-download {
-            width: 100%;
-            max-width: 300px;
-            background: linear-gradient(to right, #00c6ff, #0072ff);
-            color: white;
-        }
+        #log-container { flex-grow: 1; padding: 20px; overflow-y: auto; color: #ddd; font-family: monospace; }
+        #download-area { padding: 20px; text-align: center; display: none; background: #252526; border-top: 1px solid #333; }
+        #btn-download { width: 100%; background: #0072ff; }
     </style>
 </head>
 
@@ -299,23 +171,29 @@
         <button id="btn-process">변환 시작</button>
     </div>
 
+    <div class="settings-fab" id="btnToggleSettings">
+        <svg viewBox="0 0 24 24">
+            <path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.81,11.67,4.81,12c0,0.33,0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.5c-1.93,0-3.5-1.57-3.5-3.5 s1.57-3.5,3.5-3.5s3.5,1.57,3.5,3.5S13.93,15.5,12,15.5z"/>
+        </svg>
+    </div>
+
     <div class="settings-panel" id="settingsPanel">
-        <button class="settings-toggle-btn" id="btnToggleSettings">⚙ 고급 설정 (Click)</button>
+        <h3 style="margin-top:0; color:#4facfe;">고급 설정</h3>
 
         <div class="control-group">
-            <div><span class="control-label">Alpha</span><span class="control-desc">(강도 0.5~1.0)</span></div>
+            <span>Alpha (강도)</span>
             <input type="range" id="rangeAlpha" min="0.5" max="1.0" step="0.1" value="0.5">
-            <input type="number" id="numAlpha" min="0.5" max="1.0" step="0.1" value="0.5">
+            <input type="number" id="numAlpha" value="0.5" readonly>
         </div>
 
         <div class="control-group">
-            <div><span class="control-label">Beta</span><span class="control-desc">(잔여 0.0~0.5)</span></div>
+            <span>Beta (잔여)</span>
             <input type="range" id="rangeBeta" min="0.0" max="0.5" step="0.1" value="0.2">
-            <input type="number" id="numBeta" min="0.0" max="0.5" step="0.1" value="0.2">
+            <input type="number" id="numBeta" value="0.2" readonly>
         </div>
 
         <div class="control-group">
-            <div><span class="control-label">AI 노이즈 제거</span><span class="control-desc">(DeepFilterNet)</span></div>
+            <span>AI 노이즈 제거</span>
             <label class="switch">
                 <input type="checkbox" id="checkUseDeepFilter" checked>
                 <span class="slider"></span>
@@ -325,14 +203,12 @@
 </div>
 
 <div id="log-view">
-    <div id="log-header">
-        <h2>Processing Log</h2>
-        <span style="font-size: 0.8em; color: #888;">작업 진행 중...</span>
+    <div style="padding:15px; border-bottom:1px solid #333;">
+        <h2 style="margin:0; color:#4facfe;">Processing Log</h2>
     </div>
     <div id="log-container"></div>
-
     <div id="download-area">
-        <button id="btn-download">💾 파일 내려받기</button>
+        <button id="btn-download">💾 파일 저장하기</button>
     </div>
 </div>
 
